@@ -58,9 +58,36 @@ The folder `/firmware` contains the source code that one has to flash to the Nod
 	- __CONSTANT_OPEN_TIME__: Time after the constant light has to fade in. *Default 30 seconds.*
 
 # Wiring 
+Unless changed, connect the led strip as follows:
 
+- __+5V__: Connect to the __VIN__ pin of the NodeMCU
+- __GND__: Connect to one of the __GND__ pins of the NodeMCU
+- __DIN__: Connect to one of the __D0/GPIO16__ pin of the NodeMCU
+
+Unless changed, connect the LoRa receiver as follows:
+
+- __GND__: Connect to one of the __GND__ pins of the NodeMCU
+- __MISO__: Connect to one of the __D6/GPIO12__ pin of the NodeMCU
+- __MOSI__: Connect to one of the __D7/GPIO13__ pin of the NodeMCU
+- __SCK__: Connect to one of the __D5/GPIO15__ pin of the NodeMCU
+- __NSS__: Connect to one of the __D8/GPIO15__ pin of the NodeMCU
+- __RESET__: Connect to one of the __D1/GPIO5__ pin of the NodeMCU
+- __DIO0__: Connect to one of the __D2/GPIO4__ pin of the NodeMCU
+- __3.3v__: Connect to the __3.3V__ pin of the NodeMCU
+- __ANA__: Connect to the antenna
+
+Leave the rest unconnected.
 
 # Update Door sensor
+By default the doorsensor won't work with the light as it will communicates with the all 8 channels while we can only receive one. For this we have to set it into single channel mode. To do this we have to send the configure the device using AT commands. See the *[Wiki](https://wiki.dragino.com/xwiki/bin/view/Main/User%20Manual%20for%20LoRaWAN%20End%20Nodes/LDS02%20-%20LoRaWAN%20Door%20Sensor%20User%20Manual/)* for more information. We run the following commands. Comments should not be send to the doorsensor!
 
-
-
+    AT+CDEVEUI=8149d6562deaff58 // Replace this with your own DevEUI.
+    AT+CAPPEUI=989ffc2d10fdbd11 // Replace this with your own AppEUI.
+    AT+CAPPKEY=ed152d83e2b9ff1ff08825912f0feea5 // Replace this with your own AppKey.
+    AT+CCONFIRM=1 // Set mode to confimed
+    AT+CADR=0 // Disable ADR
+    AT+CRX1DELAY=1 // SET RxWindowDelay to 1 second.
+    AT+TTRIG=0,0 // Disable Alarm as we implemented our own alarm in code.
+    AT+CHS=868100000 // Set single channel mode's frequency
+    AT+CDATARATE=3 // Set Data rate
+    AT+CSAVE // Save settings
