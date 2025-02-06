@@ -33,7 +33,6 @@ uint8_t appKey[16] = {0xed, 0x15, 0x2d, 0x83, 0xe2, 0xb9, 0xff, 0x1f,
 #define LORA_IRQ_PIN 4   // D2
 #define WS2812B_PIN 16   // D0
 
-
 // Persistent Storage
 Preferences prefs;
 
