@@ -1,0 +1,13 @@
+{
+    "files.associations": {
+        "lorapacket.c": "cpp",
+        "string.h": "c",
+        "stddef.h": "c",
+        "esp8266wifi.h": "c",
+        "bearsslhelpers.h": "c",
+        "bearssl.h": "c",
+        "bitset": "cpp",
+        "chrono": "cpp",
+        "algorithm": "cpp"
+    }
+}
