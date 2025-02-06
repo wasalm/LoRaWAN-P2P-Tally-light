@@ -277,11 +277,10 @@ void loop()
   {
     msgAvailable = false;
     loRaWAN.parseMessage(&msg[0], msgLen, LoRa.packetRssi());
+    Serial.println("Message parsed");
   }
 
   handleLights();
-  Serial.println(millis());
-  Serial.println(LoRa.available());
 }
 
 void onReceive(int packetSize)
