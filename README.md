@@ -1,5 +1,5 @@
 # LoRaWAN P2P Tally door light
-![Alt text](relative%20path/to/img.jpg?raw=true "Tally door light")
+![Alt text](image.jpg "Tally door light")
 
 This device contains an 'on-air' like light that connects directly to a doorsensor via LoRaWAN.
 The idea is that the light will blink whenever the door opens. Also and fades into a constant light whenever the door stays open for too long. It also indicates when the battery energy is low.
