@@ -40,6 +40,7 @@ CRGB leds[NUM_LEDS];
 
 // LoRa (not LoRaWAN!) Variables
 bool msgAvailable = false;
+bool sendingDone = false;
 uint32_t msgTime = 0;
 uint8_t msg[64];
 int msgLen = 0;
@@ -101,8 +102,7 @@ void LoRa_txMode()
 
 void onTxDone()
 {
-  Serial.println("onTxDone");
-  LoRa_rxMode();
+  sendingDone = true;
 }
 
 /*
@@ -273,9 +273,32 @@ void handleLights()
 
 void loop()
 {
+  if(sendingDone) {
+    LoRa_rxMode();
+    sendingDone = false;
+  }
+
   if (msgAvailable)
   {
     msgAvailable = false;
+
+    Serial.print("Receive msg: ");
+    msgLen = 0;
+    while (LoRa.available())
+    {
+      if (msgLen < 64)
+      {
+        msg[msgLen] = LoRa.read();
+  
+        Serial.print(msg[msgLen] < 16 ? "0" : "");
+        Serial.print(msg[msgLen], HEX);
+  
+        msgLen++;
+      }
+    }
+    Serial.println();
+  
+
     loRaWAN.parseMessage(&msg[0], msgLen, LoRa.packetRssi());
     Serial.println("Message parsed");
   }
@@ -286,23 +309,6 @@ void loop()
 void onReceive(int packetSize)
 {
   msgTime = millis();
-
-  Serial.print("Receive msg: ");
-  msgLen = 0;
-  while (LoRa.available())
-  {
-    if (msgLen < 64)
-    {
-      msg[msgLen] = LoRa.read();
-
-      Serial.print(msg[msgLen] < 16 ? "0" : "");
-      Serial.print(msg[msgLen], HEX);
-
-      msgLen++;
-    }
-  }
-  Serial.println();
-
   msgAvailable = true;
 }
 
