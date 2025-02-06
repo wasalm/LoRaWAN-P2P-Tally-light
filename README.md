@@ -2,7 +2,7 @@
 ![Alt text](image.jpg "Tally door light")
 
 This device contains an 'on-air' like light that connects directly to a doorsensor via LoRaWAN.
-The idea is that the light will blink whenever the door opens. Also and fades into a constant light whenever the door stays open for too long. It also indicates when the battery energy is low.
+The idea is that the light will blink whenever the door opens. Also changes into a constant light whenever the door stays open for too long. It also indicates when the battery energy is low.
 
 The communication with the doorsensor and the light happens via LoRaWAN. In order to circumvent the need of a gateway, a significant part of the LoRaWAN 1.0.2 stack is implemented into the light. It supports:
 
@@ -47,7 +47,6 @@ The folder `/firmware` contains the source code that one has to flash to the Nod
 	- __COLOR_DOOR__: Color to show when door opens. *Default green.*
 	- __COLOR_CONSTANT_OPEN__: Color to show when door stays open. *Default blue.*
 	- __COLOR_BATTERY__: Color to add to the above when battery is running low. *Default red.*
-	- __COLOR_JOIN__: Color to show when doorsensor joins device. *Default purple.*
 - Settings w.r.t. pinout
 	- __LORA_CS_PIN__: ModeMCU pin that is connected to the Lora chip select pin. *Default `D8`.*
 	- __LORA_RESET_PIN__: ModeMCU pin that is connected to the Lora seset pin. *Default `D1`.*
@@ -55,7 +54,7 @@ The folder `/firmware` contains the source code that one has to flash to the Nod
 	- __WS2812B_PIN__: ModeMCU pin that is connected to the ledstrip. *Default `D0`.*
 - Other settings
 	- __LOW_BATTERY_VOLTAGE__: Voltage that is considered low. *Default 2100mV.*
-	- __CONSTANT_OPEN_TIME__: Time after the constant light has to fade in. *Default 30 seconds.*
+	- __CONSTANT_OPEN_TIME__: Time after the constant light has turn on constant. *Default 30 seconds.*
 
 # Wiring 
 Unless changed, connect the led strip as follows:

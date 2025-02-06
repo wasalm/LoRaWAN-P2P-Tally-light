@@ -18,7 +18,6 @@ uint8_t appKey[16] = {0xed, 0x15, 0x2d, 0x83, 0xe2, 0xb9, 0xff, 0x1f,
 #define COLOR_BOOT 0x7F5500
 #define COLOR_CONSTANT_OPEN 0x000F4F
 #define COLOR_BATTERY 0xff0000
-#define COLOR_JOIN 0x200040
 #define COLOR_DOOR 0x50FF00
 
 #define LOW_BATTERY_VOLTAGE 2100
@@ -46,43 +45,11 @@ uint8_t msg[64];
 int msgLen = 0;
 LoRaWanP2P loRaWAN;
 
-unsigned long lastTimeDoorOpen;
-bool doorOpen = false;
-bool constantLightOn = false;
+unsigned long lastJoined;
+unsigned long doorOpened;
+bool doorState = false;
+bool ledState = false;
 unsigned int battVoltage;
-
-/*
- * Led function
- */
-
-void blink(CRGB color, bool batteryLow)
-{
-  for (int j = 0; j < 3; j++)
-  {
-    // Turn the LED on, then pause
-    for (int i = 0; i < NUM_LEDS; i++)
-    {
-      leds[i] = color;
-    }
-    if (batteryLow)
-    {
-      leds[NUM_LEDS - 1] = COLOR_BATTERY;
-      leds[NUM_LEDS - 2] = COLOR_BATTERY;
-      leds[NUM_LEDS - 3] = COLOR_BATTERY;
-    }
-    FastLED.show();
-    FastLED.show();
-    delay(1000);
-    // Now turn the LED off, then pause
-    for (int i = 0; i < NUM_LEDS; i++)
-    {
-      leds[i] = CRGB::Black;
-    }
-    FastLED.show();
-    FastLED.show();
-    delay(1000);
-  }
-}
 
 void handleLDS02(uint8_t *buf, uint8_t len)
 {
@@ -95,7 +62,7 @@ void handleLDS02(uint8_t *buf, uint8_t len)
   battVoltage = ((buf[0] << 8 | buf[1]) & 0x3FFF);
   bool state = buf[0] & 0x80;
 
-  if (state == doorOpen)
+  if (state == doorState)
   {
     // State has not changed, don't bother the user.
     return;
@@ -107,28 +74,13 @@ void handleLDS02(uint8_t *buf, uint8_t len)
   if (state)
   {
     Serial.println("Door opened.");
-    doorOpen = true;
-    constantLightOn = false;     // Not yet
-    lastTimeDoorOpen = millis(); // Set timer for constant light to turn on
-
-    blink(COLOR_DOOR, battVoltage < LOW_BATTERY_VOLTAGE);
+    doorState = true;
+    doorOpened = millis(); // Set timer for constant light to turn on
   }
   else
   {
     Serial.println("Door closed.");
-
-    // Update State
-    doorOpen = false;
-    constantLightOn = false;
-
-    // Turn off all light
-    for (int i = 0; i < NUM_LEDS; i++)
-    {
-      leds[i] = CRGB::Black;
-    }
-    FastLED.show();
-    FastLED.show(); // bug in light system
-    return;
+    doorState = false;
   }
 }
 
@@ -149,6 +101,7 @@ void LoRa_txMode()
 
 void onTxDone()
 {
+  Serial.println("onTxDone");
   LoRa_rxMode();
 }
 
@@ -169,7 +122,6 @@ void LoRaWAN_onSave()
 void LoRaWAN_onJoin()
 {
   Serial.println("Device joined to the system");
-  blink(COLOR_JOIN, false);
 }
 
 void LoRaWAN_onMessage(uint8_t port, uint8_t *msg, uint8_t length)
@@ -203,6 +155,122 @@ void LoRaWAN_onResponse(uint8_t *buffer, uint8_t length, uint32_t rxDelay)
   LoRa.endPacket(true);
 }
 
+/*
+ * Led function
+ */
+void handleLights()
+{
+
+  /*
+   * Blink during boot
+   */
+
+  if (millis() < 1000 && !ledState)
+  {
+    FastLED.showColor(COLOR_BOOT);
+    FastLED.showColor(COLOR_BOOT);
+    ledState = true;
+    return;
+  }
+
+  /*
+   * Door closes
+   */
+
+  if (millis() > 2500 && !doorState && ledState)
+  {
+    FastLED.showColor(CRGB::Black);
+    FastLED.showColor(CRGB::Black);
+    ledState = false;
+  }
+
+  /*
+   * Door open
+   *
+   * 0000-1000 on
+   * 1000-2000 off
+   * 2000-3000 on
+   * 3000-4000 off
+   * 4000-5000 on
+   * 5000-.... off
+   */
+
+  if (doorState && !ledState && (millis() - doorOpened) < 5000)
+  {
+    if ((millis() - doorOpened) > 1000 && (millis() - doorOpened) < 2000)
+    {
+      return;
+    }
+
+    if ((millis() - doorOpened) > 3000 && (millis() - doorOpened) < 4000)
+    {
+      return;
+    }
+
+    for (int i = 0; i < NUM_LEDS; i++)
+    {
+      leds[i] = COLOR_DOOR;
+      if (battVoltage < LOW_BATTERY_VOLTAGE)
+      {
+        leds[NUM_LEDS - 1] = COLOR_BATTERY;
+        leds[NUM_LEDS - 2] = COLOR_BATTERY;
+        leds[NUM_LEDS - 3] = COLOR_BATTERY;
+      }
+    }
+    FastLED.show();
+    FastLED.show();
+    ledState = true;
+    return;
+  }
+
+  if (doorState && ledState && (millis() - doorOpened) < 6000)
+  {
+    if ((millis() - doorOpened) < 1000)
+    {
+      return;
+    }
+
+    if ((millis() - doorOpened) > 2000 && (millis() - doorOpened) < 3000)
+    {
+      return;
+    }
+
+    if ((millis() - doorOpened) > 4000 && (millis() - doorOpened) < 5000)
+    {
+      return;
+    }
+
+    FastLED.showColor(CRGB::Black);
+    FastLED.showColor(CRGB::Black);
+    ledState = false;
+    return;
+  }
+
+  /*
+   * Door Stays open
+   */
+
+  if (doorState && !ledState && (millis() - doorOpened) > CONSTANT_OPEN_TIME)
+  {
+    Serial.println("Door stayed open");
+
+    for (int i = 0; i < NUM_LEDS; i++)
+    {
+      leds[i] = COLOR_CONSTANT_OPEN;
+      if (battVoltage < LOW_BATTERY_VOLTAGE)
+      {
+        leds[NUM_LEDS - 1] = COLOR_BATTERY;
+        leds[NUM_LEDS - 2] = COLOR_BATTERY;
+        leds[NUM_LEDS - 3] = COLOR_BATTERY;
+      }
+    }
+    FastLED.show();
+    FastLED.show();
+    ledState = true;
+    return;
+  }
+}
+
 void loop()
 {
   if (msgAvailable)
@@ -211,33 +279,9 @@ void loop()
     loRaWAN.parseMessage(&msg[0], msgLen, LoRa.packetRssi());
   }
 
-  if (doorOpen && !constantLightOn)
-  {
-    if (millis() - lastTimeDoorOpen > CONSTANT_OPEN_TIME)
-    {
-      Serial.println("Door stayed open");
-      // Fade into constant color
-      constantLightOn = true;
-
-      for (int i = 0; i < NUM_LEDS; i++)
-      {
-        leds[i] = COLOR_CONSTANT_OPEN;
-        if (battVoltage < LOW_BATTERY_VOLTAGE)
-        {
-          leds[NUM_LEDS - 1] = COLOR_BATTERY;
-          leds[NUM_LEDS - 2] = COLOR_BATTERY;
-          leds[NUM_LEDS - 3] = COLOR_BATTERY;
-        }
-      }
-
-      for (int i = 0; i < 256; i++)
-      {
-        FastLED.setBrightness(i);
-        FastLED.show();
-        delay(6);
-      }
-    }
-  }
+  handleLights();
+  Serial.println(millis());
+  Serial.println(LoRa.available());
 }
 
 void onReceive(int packetSize)
@@ -316,7 +360,4 @@ void setup()
 
   Serial.println("LoRa init succeeded.");
   LoRa_rxMode();
-
-  // Blink to indicate boot
-  blink(COLOR_BOOT, false);
 }
