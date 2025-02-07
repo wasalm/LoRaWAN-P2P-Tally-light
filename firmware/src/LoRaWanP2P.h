@@ -93,7 +93,7 @@ public:
     void onMessage(void (*callback)(uint8_t port, uint8_t *msg, uint8_t length));
     void onResponse(void (*callback)(uint8_t *buffer, uint8_t length, uint32_t rxDelay));
 
-    void parseMessage(uint8_t *buffer, uint8_t length, int rssi);
+    void parseMessage(uint8_t *buffer, uint8_t length, int rssi, bool allowFCntReset);
 
 private:
     void (*_onSave)();
@@ -105,7 +105,7 @@ private:
     void _generateNwkSKey(uint8_t *result, uint8_t *key, uint8_t *AppNonce, uint8_t *NetID, uint8_t *DevNonce);
     void _generateAppSKey(uint8_t *result, uint8_t *key, uint8_t *AppNonce, uint8_t *NetID, uint8_t *DevNonce);
     void _parseJoinRequest(LoRaWanPHYPayload * PHYPayload);
-    void _parseDataRequest(LoRaWanPHYPayload * PHYPayload, int rssi);
+    void _parseDataRequest(LoRaWanPHYPayload * PHYPayload, int rssi, bool allowFCntReset);
 };
 
 #else

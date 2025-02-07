@@ -23,7 +23,7 @@ void LoRaWanP2P::onResponse(void (*callback)(uint8_t *buffer, uint8_t length, ui
     _onResponse = callback;
 }
 
-void LoRaWanP2P::parseMessage(uint8_t *buffer, uint8_t length, int rssi)
+void LoRaWanP2P::parseMessage(uint8_t *buffer, uint8_t length, int rssi, bool allowFCntReset)
 {
     LoRaWanPHYPayload PHYPayload;
 
@@ -41,7 +41,7 @@ void LoRaWanP2P::parseMessage(uint8_t *buffer, uint8_t length, int rssi)
 
     if (PHYPayload.isDataPackage)
     {
-        _parseDataRequest(&PHYPayload, rssi);
+        _parseDataRequest(&PHYPayload, rssi, allowFCntReset);
     }
 }
 
@@ -131,7 +131,7 @@ void LoRaWanP2P::_parseJoinRequest(LoRaWanPHYPayload *PHYPayload)
     }
 }
 
-void LoRaWanP2P::_parseDataRequest(LoRaWanPHYPayload *PHYPayload, int rssi)
+void LoRaWanP2P::_parseDataRequest(LoRaWanPHYPayload *PHYPayload, int rssi, bool allowFCntReset)
 {
     LoRaWanMACPayload macPayload;
     bool replay = false;
@@ -156,8 +156,14 @@ void LoRaWanP2P::_parseDataRequest(LoRaWanPHYPayload *PHYPayload, int rssi)
         possibleFCnt += (1 << 16);
         if (!PHYPayload->validateMIC(&nwkSKey[0], possibleFCnt))
         {
-            // Invalid MIC, ignore message
-            return;
+            if (allowFCntReset)
+            {
+                if (!PHYPayload->validateMIC(&nwkSKey[0], 0))
+                {
+                    // Invalid MIC, ignore message
+                    return;
+                }
+            }
         }
     }
 

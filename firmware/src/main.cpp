@@ -54,6 +54,7 @@ unsigned int battVoltage;
 
 uint32_t prevFCntUp;
 uint32_t prevFCntDown;
+bool firstMsg = true;
 
 void handleLDS02(uint8_t *buf, uint8_t len)
 {
@@ -307,7 +308,9 @@ void loop()
     }
     Serial.println();
 
-    loRaWAN.parseMessage(&msg[0], msgLen, LoRa.packetRssi());
+    loRaWAN.parseMessage(&msg[0], msgLen, LoRa.packetRssi(), firstMsg);
+    firstMsg = false;
+
     Serial.println("Message parsed");
   }
 
