@@ -100,32 +100,34 @@ void LoRaWanP2P::_parseJoinRequest(LoRaWanPHYPayload *PHYPayload)
     fCntDown = 0;
     fCntUp = 0;
 
-    if (!_onSave)
-    {
-        _onSave();
-    }
-
     LoRaWanPHYPayload response;
     response.mhdr = 0x20; // Join Accept
     response.payloadLength = accept.toBuffer(&response.payload[0]);
     response.isDataPackage = false;
     response.generateMIC(&appKey[0]);
 
-    // Send away
+    uint8_t buf[64];
+    uint8_t len = response.toBuffer(&buf[0]);
+
+    AES_Decrypt(&buf[1], &appKey[0]);
+    AES_Decrypt(&buf[17], &appKey[0]);
+
+    // First send away as this is time critical
     if (_onResponse)
     {
-        uint8_t buf[64];
-        uint8_t len = response.toBuffer(&buf[0]);
-
-        AES_Decrypt(&buf[1], &appKey[0]);
-        AES_Decrypt(&buf[17], &appKey[0]);
-
         _onResponse(buf, len, 5000);
+    }
 
-        if (_onJoin)
-        {
-            _onJoin();
-        }
+    // Next Save data
+    if (!_onSave)
+    {
+        _onSave();
+    }
+
+    // Give control back to user
+    if (_onJoin)
+    {
+        _onJoin();
     }
 }
 
@@ -244,7 +246,7 @@ void LoRaWanP2P::_parseDataRequest(LoRaWanPHYPayload *PHYPayload, int rssi)
         response.mhdr = 0x60; // Unconfirmed data down
         response.payloadLength = responsePayload.toBuffer(&response.payload[0]);
         response.isDataPackage = true;
-        response.generateMIC(&nwkSKey[0],fCntDown);
+        response.generateMIC(&nwkSKey[0], fCntDown);
 
         // No contents to encrypt.
 
@@ -311,40 +313,46 @@ uint8_t LoRaWanJoinAccept::toBuffer(uint8_t *buf)
     return 28;
 }
 
-uint8_t LoRaWanMACPayload::toBuffer(uint8_t *buf) {
+uint8_t LoRaWanMACPayload::toBuffer(uint8_t *buf)
+{
     buf[0] = devAddr[3];
     buf[1] = devAddr[2];
     buf[2] = devAddr[1];
     buf[3] = devAddr[0];
 
     uint8_t fCtl = fOptsLength & 0x0f;
-    if(adr) {
+    if (adr)
+    {
         fCtl |= 0x80;
     }
 
-    if(ack) {
+    if (ack)
+    {
         fCtl |= 0x20;
     }
 
-    if(pending) {
+    if (pending)
+    {
         fCtl |= 0x10;
     }
-    
+
     buf[4] = fCtl;
 
-    buf[5] = (fCnt & 0x00ff); 
+    buf[5] = (fCnt & 0x00ff);
     buf[6] = ((fCnt >> 8) & 0x00FF);
 
-    for(uint8_t i=0; i< fOptsLength; i++) {
-        buf[7+i] = fOpts[i];
+    for (uint8_t i = 0; i < fOptsLength; i++)
+    {
+        buf[7 + i] = fOpts[i];
     }
 
-    if(fPort == 0 && frmPayloadLength == 0) {
-        return 7+fOptsLength;
+    if (fPort == 0 && frmPayloadLength == 0)
+    {
+        return 7 + fOptsLength;
     }
 
-    buf[7+fOptsLength] = fPort;
-    memcpy(&buf[8+fOptsLength],&frmPayload[0],frmPayloadLength);
+    buf[7 + fOptsLength] = fPort;
+    memcpy(&buf[8 + fOptsLength], &frmPayload[0], frmPayloadLength);
 
     return 8 + fOptsLength + frmPayloadLength;
 }
