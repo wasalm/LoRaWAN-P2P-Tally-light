@@ -4,11 +4,7 @@
 This device contains an 'on-air' like light that connects directly to a doorsensor via LoRaWAN.
 The idea is that the light will blink whenever the door opens. Also changes into a constant light whenever the door stays open for too long. It also indicates when the battery energy is low.
 
-The communication with the doorsensor and the light happens via LoRaWAN. In order to circumvent the need of a gateway, a significant part of the LoRaWAN 1.0.2 stack is implemented into the light. It supports:
-
-- Both ABP and OTAA activation modes
-- Confirmed and Unconfirmed Data Up
-- Link Check Requests
+The communication with the doorsensor and the light happens via LoRaWAN. In order to circumvent the need of a gateway, a significant part of the LoRaWAN 1.0.2 stack is implemented into the light. For the doorsensor we need to use Activation By Personalization (ABP) using unconfirmed messages.
 
 As this will be a single channel receiver, ADR is not implemented and disabled by default.
 
@@ -39,9 +35,8 @@ The folder `/firmware` contains the source code that one has to flash to the Nod
 	- __FREQUENCY__: Frequency the LoRa receiver listens on. *Default 868.1MHz.*
 	- __SPREADING_FACTOR__: Spreading factor the LoRa receiver listens on. *Default SF9 or DR3.*
 	- __devAddr__: Device Address of the door sensor.
-	- __devEUI__: Device EUI of the door sensor.
-	- __appEUI__: Application EUI of the door sensor.
-	- __appKey__: Application key of the door sensor.
+	- __appSKey__: AppSKey of the door sensor.
+	- __NwkSKey__: NwkSKey key of the door sensor.
 - Settings w.r.t. Colors
 	- __COLOR_BOOT__: Color to show at boot. *Default orange.*
 	- __COLOR_DOOR__: Color to show when door opens. *Default green.*
@@ -80,10 +75,13 @@ Leave the rest unconnected.
 # Update Door sensor
 By default the doorsensor won't work with the light as it will communicates with the all 8 channels while we can only receive one. For this we have to set it into single channel mode. To do this we have to send the configure the device using AT commands. See the *[Wiki](https://wiki.dragino.com/xwiki/bin/view/Main/User%20Manual%20for%20LoRaWAN%20End%20Nodes/LDS02%20-%20LoRaWAN%20Door%20Sensor%20User%20Manual/)* for more information. We run the following commands. Comments should not be send to the doorsensor!
 
-    AT+CDEVEUI=8149d6562deaff58 // Replace this with your own DevEUI.
-    AT+CAPPEUI=989ffc2d10fdbd11 // Replace this with your own AppEUI.
-    AT+CAPPKEY=ed152d83e2b9ff1ff08825912f0feea5 // Replace this with your own AppKey.
-    AT+CCONFIRM=1 // Set mode to confimed
+	AT+CJOINMODE=1
+	AT+CDEVADDR=00981359 // Replace this with your own DevAddr
+	AT+CAPPSKEY=3e3e4c4be1a69112a2a286379ad63414 // Replace this with your own AppSKey
+	AT+CNWKSKEY=ef9c2a59aa2145eb41ac61f4d321e91f // Replace this with your own NwkSkey
+
+
+    AT+CCONFIRM=0 // Set mode to confimed
     AT+CADR=0 // Disable ADR
     AT+CRX1DELAY=1 // SET RxWindowDelay to 1 second.
     AT+TTRIG=0,0 // Disable Alarm as we implemented our own alarm in code.

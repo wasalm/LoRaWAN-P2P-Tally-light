@@ -86,6 +86,8 @@ public:
     uint32_t fCntDown;
     uint32_t fCntUp;
 
+    bool OTAAEnabled = true;
+
     void onSave(void (*callback)());
     void onJoin(void (*callback)());
     void onMessage(void (*callback)(uint8_t port, uint8_t *msg, uint8_t length));

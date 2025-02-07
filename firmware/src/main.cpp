@@ -9,10 +9,10 @@
 #define FREQUENCY 868100000 // LoRa Frequency
 #define SPREADING_FACTOR 9  // DR3
 uint8_t devAddr[4] = {0x00, 0x98, 0x13, 0x59};
-uint8_t devEUI[8] = {0x81, 0x49, 0xd6, 0x56, 0x2d, 0xea, 0xff, 0x58};
-uint8_t appEUI[8] = {0x98, 0x9f, 0xfc, 0x2d, 0x10, 0xfd, 0xbd, 0x11};
-uint8_t appKey[16] = {0xed, 0x15, 0x2d, 0x83, 0xe2, 0xb9, 0xff, 0x1f,
-                      0xf0, 0x88, 0x25, 0x91, 0x2f, 0x0f, 0xee, 0xa5};
+uint8_t appSKey[16] = {0x3e, 0x3e, 0x4c, 0x4b, 0xe1, 0xa6, 0x91, 0x12,
+                       0xa2, 0xa2, 0x86, 0x37, 0x9a, 0xd6, 0x34, 0x14};
+uint8_t nwkSKey[16] = {0xef, 0x9c, 0x2a, 0x59, 0xaa, 0x21, 0x45, 0xeb,
+                       0x41, 0xac, 0x61, 0xf4, 0xd3, 0x21, 0xe9, 0x1f};
 
 // Colors
 #define COLOR_BOOT 0x7F5500
@@ -51,6 +51,9 @@ unsigned long doorOpened;
 bool doorState = false;
 bool ledState = false;
 unsigned int battVoltage;
+
+uint32_t prevFCntUp;
+uint32_t prevFCntDown;
 
 void handleLDS02(uint8_t *buf, uint8_t len)
 {
@@ -105,6 +108,12 @@ void onTxDone()
   sendingDone = true;
 }
 
+void onReceive(int packetSize)
+{
+  msgTime = millis();
+  msgAvailable = true;
+}
+
 /*
  * LoRaWAN Callbacks
  */
@@ -112,16 +121,15 @@ void onTxDone()
 void LoRaWAN_onSave()
 {
   // If nothing changes, the library automatically stops copying.
-  prefs.putBytes("AppSKey", &loRaWAN.appSKey[0], 16);
-  prefs.putBytes("NwkSKey", &loRaWAN.nwkSKey[0], 16);
+  uint32_t newFCntUp = loRaWAN.fCntUp >> 7;
+  uint32_t newFCntDown = loRaWAN.fCntDown >> 7;
 
-  prefs.putUInt("FCntDown", loRaWAN.fCntDown >> 7);
-  prefs.putUInt("FCntUp", loRaWAN.fCntUp >> 7);
-}
-
-void LoRaWAN_onJoin()
-{
-  Serial.println("Device joined to the system");
+  if (newFCntUp != prevFCntUp || newFCntDown != prevFCntDown)
+  {
+    // Actual new data. Save!
+    prefs.putUInt("FCntUp", newFCntUp);
+    prefs.putUInt("FCntDown", newFCntDown);
+  }
 }
 
 void LoRaWAN_onMessage(uint8_t port, uint8_t *msg, uint8_t length)
@@ -273,7 +281,8 @@ void handleLights()
 
 void loop()
 {
-  if(sendingDone) {
+  if (sendingDone)
+  {
     LoRa_rxMode();
     sendingDone = false;
   }
@@ -289,27 +298,20 @@ void loop()
       if (msgLen < 64)
       {
         msg[msgLen] = LoRa.read();
-  
+
         Serial.print(msg[msgLen] < 16 ? "0" : "");
         Serial.print(msg[msgLen], HEX);
-  
+
         msgLen++;
       }
     }
     Serial.println();
-  
 
     loRaWAN.parseMessage(&msg[0], msgLen, LoRa.packetRssi());
     Serial.println("Message parsed");
   }
 
   handleLights();
-}
-
-void onReceive(int packetSize)
-{
-  msgTime = millis();
-  msgAvailable = true;
 }
 
 void setup()
@@ -331,22 +333,18 @@ void setup()
   prefs.begin("LoRaWAN");
 
   // Setup LoraWAN
+  loRaWAN.OTAAEnabled = false;
   memcpy(&loRaWAN.devAddr, devAddr, 4);
-  memcpy(&loRaWAN.devEUI, devEUI, 8);
-  memcpy(&loRaWAN.appEUI, appEUI, 8);
-  memcpy(&loRaWAN.appKey, appKey, 16);
+  memcpy(&loRaWAN.appSKey, appSKey, 16);
+  memcpy(&loRaWAN.nwkSKey, nwkSKey, 16);
 
   // Load from persistent storage
-  memset(&loRaWAN.appSKey[0], 0, 16);
-  memset(&loRaWAN.nwkSKey[0], 0, 16);
-  prefs.getBytes("AppSKey", &loRaWAN.appSKey[0], 16);
-  prefs.getBytes("NwkSKey", &loRaWAN.nwkSKey[0], 16);
-
-  loRaWAN.fCntDown = (prefs.getUInt("FCntDown", 0) + 1) << 7; // ignore the last 128 bits
-  loRaWAN.fCntUp = prefs.getUInt("FCntUp", 0) << 7;
+  prevFCntUp = prefs.getUInt("FCntUp", 0);
+  prevFCntDown = prefs.getUInt("FCntDown", 0);
+  loRaWAN.fCntUp = prevFCntUp << 7;           // ignore the last 128 bits to limit flash wear.
+  loRaWAN.fCntDown = (prevFCntDown + 1) << 7; // Also add extra so that we do not overlap frame counts.
 
   loRaWAN.onSave(LoRaWAN_onSave);
-  loRaWAN.onJoin(LoRaWAN_onJoin);
   loRaWAN.onMessage(LoRaWAN_onMessage);
   loRaWAN.onResponse(LoRaWAN_onResponse);
 

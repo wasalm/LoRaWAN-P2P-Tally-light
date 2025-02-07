@@ -33,7 +33,7 @@ void LoRaWanP2P::parseMessage(uint8_t *buffer, uint8_t length, int rssi)
         return;
     }
 
-    if (PHYPayload.mhdr == 0)
+    if (PHYPayload.mhdr == 0 && OTAAEnabled)
     {
         // Join Request
         _parseJoinRequest(&PHYPayload);
