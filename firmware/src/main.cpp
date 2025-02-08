@@ -27,10 +27,10 @@ uint8_t nwkSKey[16] = {0xef, 0x9c, 0x2a, 0x59, 0xaa, 0x21, 0x45, 0xeb,
 #define NUM_LEDS 44 // Number of leds on strip
 
 // Pinout config
-#define LORA_CS_PIN 15   // D8
-#define LORA_RESET_PIN 5 // D1
-#define LORA_IRQ_PIN 4   // D2
-#define WS2812B_PIN 16   // D0
+#define LORA_CS_PIN 15    // D8
+#define LORA_RESET_PIN 16 // D0
+#define LORA_IRQ_PIN 4    // D2
+#define WS2812B_PIN 0     // D3
 
 // Persistent Storage
 Preferences prefs;

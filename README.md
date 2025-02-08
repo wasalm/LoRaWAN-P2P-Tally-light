@@ -44,9 +44,9 @@ The folder `/firmware` contains the source code that one has to flash to the Nod
 	- __COLOR_BATTERY__: Color to add to the above when battery is running low. *Default red.*
 - Settings w.r.t. pinout
 	- __LORA_CS_PIN__: ModeMCU pin that is connected to the Lora chip select pin. *Default `D8`.*
-	- __LORA_RESET_PIN__: ModeMCU pin that is connected to the Lora seset pin. *Default `D1`.*
+	- __LORA_RESET_PIN__: ModeMCU pin that is connected to the Lora seset pin. *Default `D0`.*
 	- __LORA_IRQ_PIN__: ModeMCU pin that is connected to the Lora dio0 pin. *Default `D2`.*
-	- __WS2812B_PIN__: ModeMCU pin that is connected to the ledstrip. *Default `D0`.*
+	- __WS2812B_PIN__: ModeMCU pin that is connected to the ledstrip. *Default `D3`.*
 - Other settings
 	- __LOW_BATTERY_VOLTAGE__: Voltage that is considered low. *Default 2100mV.*
 	- __CONSTANT_OPEN_TIME__: Time after the constant light has turn on constant. *Default 30 seconds.*
@@ -56,7 +56,7 @@ Unless changed, connect the led strip as follows:
 
 - __+5V__: Connect to the __VIN__ pin of the NodeMCU
 - __GND__: Connect to one of the __GND__ pins of the NodeMCU
-- __DIN__: Connect to one of the __D0/GPIO16__ pin of the NodeMCU
+- __DIN__: Connect to one of the __D3/GPIO0__ pin of the NodeMCU
 
 Unless changed, connect the LoRa receiver as follows:
 
@@ -65,7 +65,7 @@ Unless changed, connect the LoRa receiver as follows:
 - __MOSI__: Connect to one of the __D7/GPIO13__ pin of the NodeMCU
 - __SCK__: Connect to one of the __D5/GPIO15__ pin of the NodeMCU
 - __NSS__: Connect to one of the __D8/GPIO15__ pin of the NodeMCU
-- __RESET__: Connect to one of the __D1/GPIO5__ pin of the NodeMCU
+- __RESET__: Connect to one of the __D0/GPIO16__ pin of the NodeMCU
 - __DIO0__: Connect to one of the __D2/GPIO4__ pin of the NodeMCU
 - __3.3v__: Connect to the __3.3V__ pin of the NodeMCU
 - __ANA__: Connect to the antenna
