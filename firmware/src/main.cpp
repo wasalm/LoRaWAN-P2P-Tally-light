@@ -16,12 +16,10 @@ uint8_t nwkSKey[16] = {0xef, 0x9c, 0x2a, 0x59, 0xaa, 0x21, 0x45, 0xeb,
 
 // Colors
 #define COLOR_BOOT 0x7F5500
-#define COLOR_CONSTANT_OPEN 0x000F4F
 #define COLOR_BATTERY 0xff0000
 #define COLOR_DOOR 0x50FF00
 
-#define LOW_BATTERY_VOLTAGE 2100
-#define CONSTANT_OPEN_TIME 30000 // Time door can stay open, before light fades on
+#define LOW_BATTERY_VOLTAGE 2200
 
 // Led strip config
 #define NUM_LEDS 44 // Number of leds on strip
@@ -255,29 +253,6 @@ void handleLights()
     return;
   }
 
-  /*
-   * Door Stays open
-   */
-
-  if (doorState && !ledState && (millis() - doorOpened) > CONSTANT_OPEN_TIME)
-  {
-    Serial.println("Door stayed open");
-
-    for (int i = 0; i < NUM_LEDS; i++)
-    {
-      leds[i] = COLOR_CONSTANT_OPEN;
-      if (battVoltage < LOW_BATTERY_VOLTAGE)
-      {
-        leds[NUM_LEDS - 1] = COLOR_BATTERY;
-        leds[NUM_LEDS - 2] = COLOR_BATTERY;
-        leds[NUM_LEDS - 3] = COLOR_BATTERY;
-      }
-    }
-    FastLED.show();
-    FastLED.show();
-    ledState = true;
-    return;
-  }
 }
 
 void loop()

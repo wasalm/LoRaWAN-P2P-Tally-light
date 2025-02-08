@@ -2,7 +2,7 @@
 ![Alt text](image.jpg "Tally door light")
 
 This device contains an 'on-air' like light that connects directly to a doorsensor via LoRaWAN.
-The idea is that the light will blink whenever the door opens. Also changes into a constant light whenever the door stays open for too long. It also indicates when the battery energy is low.
+The idea is that the light will blink whenever the door opens. It also indicates when the battery energy is low.
 
 The communication with the doorsensor and the light happens via LoRaWAN. In order to circumvent the need of a gateway, a significant part of the LoRaWAN 1.0.2 stack is implemented into the light. For the doorsensor we need to use Activation By Personalization (ABP) using unconfirmed messages.
 
@@ -40,7 +40,6 @@ The folder `/firmware` contains the source code that one has to flash to the Nod
 - Settings w.r.t. Colors
 	- __COLOR_BOOT__: Color to show at boot. *Default orange.*
 	- __COLOR_DOOR__: Color to show when door opens. *Default green.*
-	- __COLOR_CONSTANT_OPEN__: Color to show when door stays open. *Default blue.*
 	- __COLOR_BATTERY__: Color to add to the above when battery is running low. *Default red.*
 - Settings w.r.t. pinout
 	- __LORA_CS_PIN__: ModeMCU pin that is connected to the Lora chip select pin. *Default `D8`.*
@@ -48,8 +47,7 @@ The folder `/firmware` contains the source code that one has to flash to the Nod
 	- __LORA_IRQ_PIN__: ModeMCU pin that is connected to the Lora dio0 pin. *Default `D2`.*
 	- __WS2812B_PIN__: ModeMCU pin that is connected to the ledstrip. *Default `D3`.*
 - Other settings
-	- __LOW_BATTERY_VOLTAGE__: Voltage that is considered low. *Default 2100mV.*
-	- __CONSTANT_OPEN_TIME__: Time after the constant light has turn on constant. *Default 30 seconds.*
+	- __LOW_BATTERY_VOLTAGE__: Voltage that is considered low. *Default 2200mV.*
 
 # Wiring 
 Unless changed, connect the led strip as follows:
@@ -79,7 +77,6 @@ By default the doorsensor won't work with the light as it will communicates with
 	AT+CDEVADDR=00981359 // Replace this with your own DevAddr
 	AT+CAPPSKEY=3e3e4c4be1a69112a2a286379ad63414 // Replace this with your own AppSKey
 	AT+CNWKSKEY=ef9c2a59aa2145eb41ac61f4d321e91f // Replace this with your own NwkSkey
-
 
     AT+CCONFIRM=0 // Set mode to confimed
     AT+CADR=0 // Disable ADR
