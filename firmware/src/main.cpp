@@ -46,7 +46,7 @@ LoRaWanP2P loRaWAN;
 
 unsigned long lastJoined;
 unsigned long doorOpened;
-bool doorState = false;
+bool isBlinking = false;
 bool ledState = false;
 unsigned int battVoltage;
 
@@ -65,25 +65,21 @@ void handleLDS02(uint8_t *buf, uint8_t len)
   battVoltage = ((buf[0] << 8 | buf[1]) & 0x3FFF);
   bool state = buf[0] & 0x80;
 
-  if (state == doorState)
-  {
-    // State has not changed, don't bother the user.
-    return;
-  }
-
   Serial.print("Batt(mV)s: ");
   Serial.println(battVoltage);
 
   if (state)
   {
     Serial.println("Door opened.");
-    doorState = true;
-    doorOpened = millis(); // Set timer for constant light to turn on
+    if (!isBlinking)
+    {
+      isBlinking = true;
+      doorOpened = millis(); // Set timer for constant light to turn on
+    }
   }
   else
   {
     Serial.println("Door closed.");
-    doorState = false;
   }
 }
 
@@ -184,7 +180,7 @@ void handleLights()
    * Door closes
    */
 
-  if (millis() > 2500 && !doorState && ledState)
+  if (millis() > 2500 && !isBlinking && ledState)
   {
     FastLED.showColor(CRGB::Black);
     FastLED.showColor(CRGB::Black);
@@ -202,7 +198,10 @@ void handleLights()
    * 5000-.... off
    */
 
-  if (doorState && !ledState && (millis() - doorOpened) < 5000)
+  // N.B. If no-one open the doors in 50 days,
+  // the unsigned long will overflow and the light will blink randomly.
+  // We ignore this
+  if (isBlinking && !ledState && (millis() - doorOpened) < 5000)
   {
     if ((millis() - doorOpened) > 1000 && (millis() - doorOpened) < 2000)
     {
@@ -230,7 +229,7 @@ void handleLights()
     return;
   }
 
-  if (doorState && ledState && (millis() - doorOpened) < 6000)
+  if (isBlinking && ledState && (millis() - doorOpened) < 6000)
   {
     if ((millis() - doorOpened) < 1000)
     {
@@ -250,9 +249,14 @@ void handleLights()
     FastLED.showColor(CRGB::Black);
     FastLED.showColor(CRGB::Black);
     ledState = false;
+
+    if ((millis() - doorOpened) > 5000)
+    {
+      isBlinking = false;
+    }
+
     return;
   }
-
 }
 
 void loop()
