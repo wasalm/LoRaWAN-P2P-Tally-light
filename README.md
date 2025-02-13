@@ -79,9 +79,10 @@ By default the doorsensor won't work with the light as it will communicates with
 	AT+CNWKSKEY=ef9c2a59aa2145eb41ac61f4d321e91f // Replace this with your own NwkSkey
 
     AT+CCONFIRM=0 // Set mode to confimed
+    AT+DDETECT=0,1440,2880
     AT+CADR=0 // Disable ADR
     AT+CRX1DELAY=1 // SET RxWindowDelay to 1 second.
-    AT+TTRIG=0,0 // Disable Alarm as we implemented our own alarm in code.
+    AT+TTRIG=0,0 // Disable Alarm
     AT+CHS=868100000 // Set single channel mode's frequency
     AT+CDATARATE=3 // Set Data rate
     AT+CSAVE // Save settings
