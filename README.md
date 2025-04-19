@@ -8,6 +8,8 @@ The communication with the doorsensor and the light happens via LoRaWAN. In orde
 
 As this will be a single channel receiver, ADR is not implemented and disabled by default.
 
+The system also forwards the message via ESP-NOW. This way other devices can be connected. This can be used for example for sound.
+
 # Bill of Materials
 For this light the following
 
@@ -15,6 +17,7 @@ For this light the following
 - 1 *NodeMCU ESP8266* microcontroller. (Any other 3.3v microcontroller will work)
 - 1 *WS2812B* RGB ledstrip. (Above example uses 44 leds)
 - 1 *HopeRF RFM95W* Lora Receiver
+- 1 *Sonoff S26R2*  WiFi relay switch (Optional)
 - Cables and charger
 - Acces to a 3d printer
 
@@ -27,7 +30,7 @@ Seperately, one needs to find a semi translucent sheet of plastic that act as th
 In the file `text.stl` one can find the text *Voordeur*. These letters van be glued to the front plane using super glue. In order to position them correctly, a placing template is added to the file.
 
 # Code
-The folder `/firmware` contains the source code that one has to flash to the NodeMCU. Using VSCode and PlatformIO one can compile and flash the microcontroller. The main code is inside `main.cpp`. In the beginning of the file, there are variables one can change to to ones own preferences.
+The folder `/firmware-light` contains the source code that one has to flash to the NodeMCU. Using VSCode and PlatformIO one can compile and flash the microcontroller. The main code is inside `main.cpp`. In the beginning of the file, there are variables one can change to to ones own preferences.
 
 - Settings w.r.t. the ledstrip
 	- __NUM_LEDS__: Number of leds on the RGB strip. Default 44
@@ -48,6 +51,9 @@ The folder `/firmware` contains the source code that one has to flash to the Nod
 	- __WS2812B_PIN__: ModeMCU pin that is connected to the ledstrip. *Default `D3`.*
 - Other settings
 	- __LOW_BATTERY_VOLTAGE__: Voltage that is considered low. *Default 2200mV.*
+	- __broadcastAddress__: This is the mac address the message is forwarded to.
+
+The folder `/firmware-relay` contains the source code that one has to flash to a Sonoff S26R2. This way the relay will switch when the door opens. Using VSCode and PlatformIO one can compile and flash the microcontroller. The main code is inside `main.cpp`.
 
 # Wiring 
 Unless changed, connect the led strip as follows:

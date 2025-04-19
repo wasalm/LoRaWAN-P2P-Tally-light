@@ -3,6 +3,8 @@
 #define FASTLED_ESP8266_RAW_PIN_ORDER
 #include <FastLED.h>
 #include <Preferences.h>
+#include <espnow.h>
+#include <ESP8266WiFi.h>
 #include "LoRaWanP2P.h"
 
 // We can only use a single channel
@@ -13,6 +15,16 @@ uint8_t appSKey[16] = {0x3e, 0x3e, 0x4c, 0x4b, 0xe1, 0xa6, 0x91, 0x12,
                        0xa2, 0xa2, 0x86, 0x37, 0x9a, 0xd6, 0x34, 0x14};
 uint8_t nwkSKey[16] = {0xef, 0x9c, 0x2a, 0x59, 0xaa, 0x21, 0x45, 0xeb,
                        0x41, 0xac, 0x61, 0xf4, 0xd3, 0x21, 0xe9, 0x1f};
+
+// Forward message via ESP-NOW
+uint8_t broadcastAddress[] = {0xF4, 0xCF, 0xA2, 0x16, 0x47, 0x4D};
+typedef struct struct_esp_now_message
+{
+  unsigned int batteryVoltage;
+  bool doorOpened;
+} struct_esp_now_message;
+
+struct_esp_now_message espNowMessage;
 
 // Colors
 #define COLOR_BOOT 0x7F5500
@@ -81,6 +93,11 @@ void handleLDS02(uint8_t *buf, uint8_t len)
   {
     Serial.println("Door closed.");
   }
+
+  // Forward message via ESP-NOW
+  espNowMessage.batteryVoltage = battVoltage;
+  espNowMessage.doorOpened = state;
+  esp_now_send(broadcastAddress, (uint8_t *) &espNowMessage, sizeof(espNowMessage));
 }
 
 /*
@@ -345,4 +362,15 @@ void setup()
 
   Serial.println("LoRa init succeeded.");
   LoRa_rxMode();
+
+  // Setup Wifi
+  WiFi.mode(WIFI_STA);
+  if (esp_now_init() != 0) {
+    Serial.println("Error initializing ESP-NOW");
+    return;
+  }
+
+  esp_now_set_self_role(ESP_NOW_ROLE_CONTROLLER);
+  // esp_now_register_send_cb(OnDataSent); // We don't need a callback
+  esp_now_add_peer(broadcastAddress, ESP_NOW_ROLE_SLAVE, 1, NULL, 0);
 }
