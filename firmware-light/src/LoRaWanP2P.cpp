@@ -162,9 +162,14 @@ void LoRaWanP2P::_parseDataRequest(LoRaWanPHYPayload *PHYPayload, int rssi, bool
                 {
                     // Invalid MIC, ignore message
                     return;
-                }
+                }              
             }
         }
+    }
+
+    if(possibleFCnt == 0 && allowFCntReset) {
+        fCntUp = 0;
+        toSave = true;
     }
 
     if (fCntUp > possibleFCnt)
@@ -173,7 +178,7 @@ void LoRaWanP2P::_parseDataRequest(LoRaWanPHYPayload *PHYPayload, int rssi, bool
         return;
     }
 
-    if (fCntUp == possibleFCnt)
+    if (fCntUp == possibleFCnt && fCntUp != 0)
     {
         replay = true; // We do answer this message, but we do not forward it to the user.
     }
@@ -275,6 +280,7 @@ void LoRaWanP2P::_parseDataRequest(LoRaWanPHYPayload *PHYPayload, int rssi, bool
     {
         _onMessage(macPayload.fPort, &macPayload.frmPayload[0], macPayload.frmPayloadLength);
     }
+
 }
 
 uint8_t LoRaWanPHYPayload::toBuffer(uint8_t *buf)
